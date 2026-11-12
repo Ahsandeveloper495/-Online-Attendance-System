@@ -1,0 +1,27 @@
+{
+  "1": {
+    "student_id": 1,
+    "roll_number": "2021-CS-101",
+    "full_name": "Ahsan Ali"
+  },
+  "2": {
+    "student_id": 2,
+    "roll_number": "2021-CS-102",
+    "full_name": "Fatima Zahra"
+  },
+  "3": {
+    "student_id": 3,
+    "roll_number": "2021-CS-103",
+    "full_name": "Bilal Ahmed"
+  },
+  "4": {
+    "student_id": 4,
+    "roll_number": "2021-CS-104",
+    "full_name": "Zainab Bibi"
+  },
+  "5": {
+    "student_id": 5,
+    "roll_number": "2021-CS-105",
+    "full_name": "Hamza Tariq"
+  }
+}

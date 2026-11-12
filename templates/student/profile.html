@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-person-badge text-primary me-2"></i>Student Biometric Profile</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center gap-4 mb-4 pb-4 border-bottom">
+                    <div class="bg-primary text-white rounded-circle p-3 d-flex align-items-center justify-content-center shadow" style="width: 80px; height: 80px; font-size: 2.2rem;">
+                        <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                        <h4 class="fw-bold mb-1">{{ student.full_name }}</h4>
+                        <div class="text-primary fw-bold fs-5 mb-1">{{ student.roll_number }}</div>
+                        <span class="badge bg-light text-dark border">{{ student.department_name or 'Computer Science' }}</span>
+                        <span class="badge bg-light text-dark border">Section: {{ student.section_name or 'BSCS-8A' }}</span>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Username</label>
+                        <div class="fw-bold">{{ student.username }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Institutional Email</label>
+                        <div class="fw-bold">{{ student.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Phone Contact</label>
+                        <div class="fw-bold">{{ student.phone or '-' }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="text-muted small fw-semibold">Current Semester</label>
+                        <div class="fw-bold">Semester {{ student.semester }}</div>
+                    </div>
+                </div>
+
+                <!-- Biometric Registration Status Box -->
+                <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-bold"><i class="bi bi-person-bounding-box text-primary me-2"></i>Biometric Facial Template</span>
+                        {% if student.is_face_registered %}
+                        <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Enrolled &amp; Active</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>Pending Registration</span>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted d-block mb-2">
+                        Enrolled timestamp: <strong>{{ student.face_registered_at or 'Pending admin/teacher enrollment' }}</strong>
+                    </small>
+                    <div class="alert alert-info py-2 px-3 small mb-0">
+                        <i class="bi bi-shield-lock me-1"></i>
+                        <strong>Privacy-Conscious Biometric Protection:</strong>
+                        This system converts facial images into mathematical Local Binary Pattern (LBPH) feature descriptors. Biometric templates cannot be reverse-engineered into photographic images.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

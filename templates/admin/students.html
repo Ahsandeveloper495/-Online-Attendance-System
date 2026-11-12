@@ -1,0 +1,169 @@
+{% extends 'base.html' %}
+{% block title %}Manage Students - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-people text-primary me-2"></i>Student Management</h3>
+        <p class="text-muted mb-0">Register students, enroll facial biometric samples, and manage enrollments</p>
+    </div>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary btn-sm shadow-sm" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+            <i class="bi bi-person-plus-fill me-1"></i>Add New Student
+        </button>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <div class="row g-2 align-items-center">
+            <div class="col-md-6">
+                <h6 class="fw-bold mb-0">Enrolled Students Roster ({{ students|length }})</h6>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <input type="text" id="studentSearchInput" class="form-control form-control-sm d-inline-block w-auto" placeholder="Search by name or roll no..." onkeyup="filterStudents()">
+            </div>
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" id="studentsTable">
+            <thead class="table-light">
+                <tr>
+                    <th>Roll Number</th>
+                    <th>Full Name</th>
+                    <th>Department &amp; Section</th>
+                    <th>Semester</th>
+                    <th>Contact</th>
+                    <th>Biometric Face Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for s in students %}
+                <tr>
+                    <td class="fw-bold text-primary">{{ s.roll_number }}</td>
+                    <td>
+                        <div class="fw-semibold">{{ s.full_name }}</div>
+                        <small class="text-muted">{{ s.email }}</small>
+                    </td>
+                    <td>
+                        <div>{{ s.department_name or 'N/A' }}</div>
+                        <small class="badge bg-light text-dark border">{{ s.section_name or 'Unassigned' }}</small>
+                    </td>
+                    <td>Semester {{ s.semester }}</td>
+                    <td class="small">{{ s.phone or '-' }}</td>
+                    <td>
+                        {% if s.is_face_registered %}
+                        <span class="badge bg-success-subtle text-success border border-success">
+                            <i class="bi bi-check-circle-fill me-1"></i>Enrolled
+                        </span>
+                        <div class="small text-muted" style="font-size: 0.7rem;">{{ s.face_registered_at or '' }}</div>
+                        {% else %}
+                        <span class="badge bg-warning-subtle text-warning-emphasis border border-warning">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i>Pending
+                        </span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a href="{{ url_for('admin.student_register_face', student_id=s.student_id) }}" class="btn btn-sm btn-outline-primary" title="Enroll / Re-enroll Face">
+                            <i class="bi bi-camera me-1"></i>Enroll Face
+                        </a>
+                        <form action="{{ url_for('admin.delete_student', student_id=s.student_id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to delete student {{ s.roll_number }}? All attendance records will be removed.');">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Student">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="text-center py-4 text-muted">No students registered yet. Click "Add New Student" above.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Add Student Modal -->
+<div class="modal fade" id="addStudentModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form action="{{ url_for('admin.students') }}" method="POST">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-person-plus text-primary me-2"></i>Register New Student</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Full Name *</label>
+                            <input type="text" name="full_name" class="form-control" placeholder="e.g. Ali Raza" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Roll Number *</label>
+                            <input type="text" name="roll_number" class="form-control" placeholder="e.g. 2021-CS-110" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Portal Username *</label>
+                            <input type="text" name="username" class="form-control" placeholder="e.g. ali110" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Email Address *</label>
+                            <input type="email" name="email" class="form-control" placeholder="e.g. ali@university.edu" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Department</label>
+                            <select name="department_id" class="form-select">
+                                <option value="">Select Department</option>
+                                {% for d in departments %}
+                                <option value="{{ d.id }}">{{ d.name }} ({{ d.code }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Section</label>
+                            <select name="section_id" class="form-select">
+                                <option value="">Select Section</option>
+                                {% for sec in sections %}
+                                <option value="{{ sec.id }}">{{ sec.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-semibold">Semester</label>
+                            <input type="number" name="semester" class="form-control" value="8" min="1" max="12">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Phone Number</label>
+                            <input type="text" name="phone" class="form-control" placeholder="+92 300 0000000">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Initial Password</label>
+                            <input type="text" name="password" class="form-control" value="student123" required>
+                            <small class="text-muted">Student can change this after logging in.</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary fw-bold">Save &amp; Proceed to Face Enrollment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function filterStudents() {
+    const filter = document.getElementById('studentSearchInput').value.toLowerCase();
+    const rows = document.querySelectorAll('#studentsTable tbody tr');
+    rows.forEach(r => {
+        const text = r.textContent.toLowerCase();
+        r.style.display = text.includes(filter) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

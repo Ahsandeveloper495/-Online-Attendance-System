@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Sign In - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="col-md-8 col-lg-5">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #1e3a8a, #3b82f6);">
+                <div class="d-inline-flex align-items-center justify-content-center bg-white text-primary rounded-circle mb-2 shadow" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-person-bounding-box"></i>
+                </div>
+                <h4 class="fw-bold mb-1">Smart Attendance AI</h4>
+                <p class="small text-white-50 mb-0">Biometric Facial Recognition Portal</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <!-- Demo Quick Fill Buttons -->
+                <div class="mb-4 text-center">
+                    <p class="text-muted small fw-semibold mb-2">QUICK TEST LOGIN (FYP DEMO):</p>
+                    <div class="btn-group w-100 shadow-sm" role="group">
+                        <button type="button" class="btn btn-outline-primary btn-sm" onclick="fillDemo('admin', 'admin123', 'admin')">
+                            <i class="bi bi-shield-lock me-1"></i>Admin
+                        </button>
+                        <button type="button" class="btn btn-outline-success btn-sm" onclick="fillDemo('teacher1', 'teacher123', 'teacher')">
+                            <i class="bi bi-person-workspace me-1"></i>Teacher
+                        </button>
+                        <button type="button" class="btn btn-outline-info btn-sm" onclick="fillDemo('student1', 'student123', 'student')">
+                            <i class="bi bi-mortarboard me-1"></i>Student
+                        </button>
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('auth.login') }}">
+                    <input type="hidden" name="role_hint" id="roleHint" value="">
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label fw-semibold">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-person"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" placeholder="e.g. admin, teacher1, student1" required autofocus>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label fw-semibold">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                            <button class="btn btn-outline-secondary" type="button" onclick="togglePasswordVisibility()">
+                                <i class="bi bi-eye" id="toggleIcon"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg fw-bold shadow-sm">
+                            <i class="bi bi-box-arrow-in-right me-2"></i>Sign In to Dashboard
+                        </button>
+                    </div>
+                </form>
+
+                <div class="text-center mt-3 pt-3 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-shield-check text-success me-1"></i>
+                        Automated facial recognition &amp; anti-proxy verification active.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function fillDemo(username, password, role) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+    document.getElementById('roleHint').value = role;
+}
+
+function togglePasswordVisibility() {
+    const pwInput = document.getElementById('password');
+    const icon = document.getElementById('toggleIcon');
+    if (pwInput.type === 'password') {
+        pwInput.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+    } else {
+        pwInput.type = 'password';
+        icon.className = 'bi bi-eye';
+    }
+}
+</script>
+{% endblock %}

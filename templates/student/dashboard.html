@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% block title %}Student Dashboard - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-mortarboard text-primary me-2"></i>Student Portal</h3>
+        <p class="text-muted mb-0">Welcome, <strong>{{ student.full_name }}</strong> (Roll No: {{ student.roll_number }})</p>
+    </div>
+    <div>
+        <span class="badge bg-light text-dark border fs-6 p-2">
+            Section: <strong>{{ student.section_name or 'BSCS-8A' }}</strong> | Semester: {{ student.semester }}
+        </span>
+    </div>
+</div>
+
+<!-- Low Attendance Warning Alert if applicable -->
+{% if has_low_attendance or overall_pct < min_threshold %}
+<div class="alert alert-danger d-flex align-items-center justify-content-between shadow-sm mb-4">
+    <div class="d-flex align-items-center gap-2">
+        <i class="bi bi-exclamation-octagon-fill fs-3 text-danger"></i>
+        <div>
+            <h6 class="fw-bold mb-0">Attendance Defaulter Warning!</h6>
+            <div class="small">
+                Your attendance in one or more courses is below the mandatory <strong>{{ min_threshold }}%</strong> threshold. Please attend upcoming sessions to remain eligible for final examinations.
+            </div>
+        </div>
+    </div>
+    <a href="{{ url_for('student.history') }}" class="btn btn-sm btn-danger fw-bold">View History</a>
+</div>
+{% endif %}
+
+<!-- Overview Stats Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 p-3">
+            <span class="text-muted small fw-semibold text-uppercase">Overall Attendance</span>
+            <div class="d-flex align-items-baseline gap-2 mt-1">
+                <h2 class="fw-bold mb-0 {% if overall_pct >= min_threshold %}text-success{% else %}text-danger{% endif %}">
+                    {{ overall_pct }}%
+                </h2>
+                <small class="{% if overall_pct >= min_threshold %}text-success{% else %}text-danger{% endif %} fw-semibold">
+                    {% if overall_pct >= min_threshold %}Eligible{% else %}Defaulter{% endif %}
+                </small>
+            </div>
+            <div class="progress mt-2" style="height: 6px;">
+                <div class="progress-bar {% if overall_pct >= min_threshold %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ overall_pct }}%;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 p-3">
+            <span class="text-muted small fw-semibold text-uppercase">Total Classes Held</span>
+            <h2 class="fw-bold mb-0 mt-1 text-primary">{{ stats.total_classes or 0 }}</h2>
+            <small class="text-muted">Recorded sessions</small>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 p-3">
+            <span class="text-muted small fw-semibold text-uppercase">Attended Classes</span>
+            <h2 class="fw-bold mb-0 mt-1 text-success">{{ stats.attended_classes or 0 }}</h2>
+            <small class="text-muted">{{ stats.present_classes or 0 }} Present, {{ stats.late_classes or 0 }} Late</small>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-lg-3">
+        <div class="card card-hover h-100 p-3">
+            <span class="text-muted small fw-semibold text-uppercase">Missed Classes</span>
+            <h2 class="fw-bold mb-0 mt-1 text-danger">{{ stats.absent_classes or 0 }}</h2>
+            <small class="text-danger fw-semibold">Absences on record</small>
+        </div>
+    </div>
+</div>
+
+<!-- Course Breakdown & Recent History -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="fw-bold mb-0"><i class="bi bi-journal-bookmark text-primary me-2"></i>Subject-wise Attendance Breakdown</h6>
+            </div>
+            <div class="card-body">
+                {% for cb in course_breakdown %}
+                <div class="mb-4 pb-3 {% if not loop.last %}border-bottom{% endif %}">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <div>
+                            <span class="badge bg-light text-dark border me-1">{{ cb.course_code }}</span>
+                            <span class="fw-bold">{{ cb.course_name }}</span>
+                        </div>
+                        <div>
+                            <span class="fw-bold fs-6 {% if cb.percent >= min_threshold %}text-success{% else %}text-danger{% endif %}">
+                                {{ cb.percent }}%
+                            </span>
+                        </div>
+                    </div>
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div class="progress-bar {% if cb.percent >= min_threshold %}bg-success{% else %}bg-danger{% endif %}" role="progressbar" style="width: {{ cb.percent }}%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted">
+                        <span>Attended: <strong>{{ cb.attended or 0 }}</strong> / {{ cb.total_sessions or 0 }}</span>
+                        <span>Missed: <strong>{{ cb.absent or 0 }}</strong></span>
+                        <span>Status: 
+                            {% if cb.percent >= min_threshold %}
+                            <strong class="text-success"><i class="bi bi-check-circle"></i> Good Standing</strong>
+                            {% else %}
+                            <strong class="text-danger"><i class="bi bi-exclamation-triangle"></i> Defaulter</strong>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">No course enrollments found.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="col-lg-5">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Recent Attendance Logs</h6>
+                <a href="{{ url_for('student.history') }}" class="btn btn-sm btn-link text-decoration-none">Full History &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in recent_logs %}
+                        <tr>
+                            <td class="small">{{ log.attendance_date }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ log.course_code }}</span></td>
+                            <td>
+                                {% if log.status == 'Present' %}
+                                <span class="badge badge-present">Present</span>
+                                {% elif log.status == 'Late' %}
+                                <span class="badge badge-late">Late</span>
+                                {% else %}
+                                <span class="badge badge-absent">Absent</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="3" class="text-center py-3 text-muted">No attendance logs yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Start Attendance Session - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7 col-lg-6">
+        <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+            <div class="card-header text-white text-center py-4" style="background: linear-gradient(135deg, #f59e0b, #d97706);">
+                <div class="d-inline-flex align-items-center justify-content-center bg-white text-warning rounded-circle mb-2 shadow" style="width: 56px; height: 56px; font-size: 1.6rem;">
+                    <i class="bi bi-camera-video-fill"></i>
+                </div>
+                <h4 class="fw-bold mb-1">Start Live Attendance Session</h4>
+                <p class="small text-white-50 mb-0">Select class and initialize AI facial recognition camera</p>
+            </div>
+
+            <div class="card-body p-4 p-md-5">
+                <form action="{{ url_for('teacher.start_session') }}" method="POST">
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Select Class / Course</label>
+                        <select name="assignment_id" class="form-select form-select-lg" required>
+                            <option value="">-- Choose Assigned Course &amp; Section --</option>
+                            {% for c in assigned_classes %}
+                            <option value="{{ c.assignment_id }}">
+                                {{ c.course_code }} - {{ c.course_name }} (Section: {{ c.section_name }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="p-3 bg-light rounded-3 mb-4">
+                        <h6 class="fw-bold small text-uppercase text-muted mb-2"><i class="bi bi-shield-check text-success me-1"></i>Automated AI Safety:</h6>
+                        <ul class="small text-muted mb-0 ps-3">
+                            <li>Real-time face detection with green bounding box.</li>
+                            <li>Instant attendance insertion with match confidence %.</li>
+                            <li>Automatic duplicate prevention (anti-proxy protection).</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-warning btn-lg fw-bold shadow-sm text-dark">
+                            <i class="bi bi-play-circle-fill me-2"></i>Launch Live Camera Console
+                        </button>
+                        <a href="{{ url_for('teacher.dashboard') }}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,194 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-speedometer2 text-primary me-2"></i>Administrator Dashboard</h3>
+        <p class="text-muted mb-0">System Overview, Biometrics, and Institution Attendance Intelligence</p>
+    </div>
+    <div class="d-flex gap-2">
+        <form action="{{ url_for('admin.retrain_model') }}" method="POST" class="d-inline">
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-arrow-repeat me-1"></i>Retrain Face AI Model
+            </button>
+        </form>
+        <a href="{{ url_for('admin.students') }}" class="btn btn-primary btn-sm shadow-sm">
+            <i class="bi bi-person-plus me-1"></i>Add New Student
+        </a>
+    </div>
+</div>
+
+<!-- Metric Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-hover h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Total Students</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_students }}</h3>
+                    <small class="text-success"><i class="bi bi-check2"></i> Enrolled across sections</small>
+                </div>
+                <div class="stat-icon-box bg-primary-subtle text-primary">
+                    <i class="bi bi-mortarboard-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-hover h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Faculty Teachers</span>
+                    <h3 class="fw-bold mb-0 mt-1">{{ total_teachers }}</h3>
+                    <small class="text-muted">Instructors active</small>
+                </div>
+                <div class="stat-icon-box bg-success-subtle text-success">
+                    <i class="bi bi-person-workspace"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-hover h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Overall Attendance</span>
+                    <h3 class="fw-bold mb-0 mt-1 text-primary">{{ overall_attendance_pct }}%</h3>
+                    <small class="text-muted">Institutional average</small>
+                </div>
+                <div class="stat-icon-box bg-info-subtle text-info">
+                    <i class="bi bi-pie-chart-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-sm-6 col-xl-3">
+        <div class="card card-hover h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between">
+                <div>
+                    <span class="text-muted small fw-semibold text-uppercase">Defaulters (&lt; 75%)</span>
+                    <h3 class="fw-bold mb-0 mt-1 text-danger">{{ defaulters_count }}</h3>
+                    <small class="text-danger fw-semibold"><i class="bi bi-exclamation-circle"></i> Low attendance</small>
+                </div>
+                <div class="stat-icon-box bg-danger-subtle text-danger">
+                    <i class="bi bi-exclamation-triangle-fill"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Middle Row: AI Biometric Status & Attendance Distribution -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header bg-white py-3 border-bottom">
+                <h6 class="fw-bold mb-0"><i class="bi bi-cpu text-primary me-2"></i>Biometric AI Engine Status</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                    <div>
+                        <strong>Face Recognition Model</strong>
+                        <div class="small text-muted">OpenCV LBPH Multi-scale</div>
+                    </div>
+                    {% if model_status.is_trained %}
+                    <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Active / Trained</span>
+                    {% else %}
+                    <span class="badge bg-warning text-dark"><i class="bi bi-clock me-1"></i>Pending Samples</span>
+                    {% endif %}
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3 pb-3 border-bottom">
+                    <div>
+                        <strong>Registered Face Profiles</strong>
+                        <div class="small text-muted">Biometric datasets on disk</div>
+                    </div>
+                    <span class="badge bg-primary fs-6">{{ faces_registered }} / {{ total_students }}</span>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div>
+                        <strong>Anti-Spoofing &amp; Liveness</strong>
+                        <div class="small text-muted">Laplacian Texture + Landmark Check</div>
+                    </div>
+                    <span class="badge bg-info text-dark">Enabled</span>
+                </div>
+
+                <div class="mt-4 p-3 bg-light rounded-3">
+                    <small class="text-muted d-block mb-2">Need to refresh face templates after new student registrations?</small>
+                    <form action="{{ url_for('admin.retrain_model') }}" method="POST">
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-arrow-repeat me-1"></i>Sync &amp; Retrain Model Now
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+                <h6 class="fw-bold mb-0"><i class="bi bi-clock-history text-primary me-2"></i>Live Attendance Feed (Recent 10 Marks)</h6>
+                <a href="{{ url_for('reports.index') }}" class="btn btn-sm btn-link text-decoration-none">View All Reports &rarr;</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student</th>
+                            <th>Course</th>
+                            <th>Status</th>
+                            <th>Confidence</th>
+                            <th>Source</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for r in recent_records %}
+                        <tr>
+                            <td class="fw-bold">{{ r.roll_number }}</td>
+                            <td>{{ r.student_name }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ r.course_code }}</span></td>
+                            <td>
+                                {% if r.status == 'Present' %}
+                                <span class="badge badge-present">Present</span>
+                                {% elif r.status == 'Late' %}
+                                <span class="badge badge-late">Late</span>
+                                {% else %}
+                                <span class="badge badge-absent">Absent</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.confidence_score %}
+                                <span class="text-success fw-semibold">{{ r.confidence_score }}%</span>
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if r.marked_by == 'AI_FACE_RECOGNITION' %}
+                                <span class="badge bg-info-subtle text-info border"><i class="bi bi-camera"></i> AI Face</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-secondary border">Manual</span>
+                                {% endif %}
+                            </td>
+                            <td class="small text-muted">{{ r.marked_at }}</td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">No attendance recorded yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

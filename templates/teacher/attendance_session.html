@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% block title %}Live Attendance Console - {{ session_data.course_code }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h4 class="fw-bold mb-1">
+            <span class="badge bg-warning text-dark me-2">{{ session_data.course_code }}</span>
+            {{ session_data.course_name }} ({{ session_data.section_name }})
+        </h4>
+        <p class="text-muted small mb-0">Date: <strong>{{ session_data.session_date }}</strong> | Started: {{ session_data.start_time }}</p>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+        <span id="sessionActiveBadge" class="badge bg-secondary">Starting Camera...</span>
+        <form action="{{ url_for('teacher.close_session', session_uuid=session_data.session_uuid) }}" method="POST" onsubmit="return confirm('Close attendance session? Remaining unmarked students will be marked Absent.');">
+            <button type="submit" class="btn btn-danger btn-sm fw-bold shadow-sm">
+                <i class="bi bi-stop-circle me-1"></i>Finish &amp; Close Session
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="row g-3">
+    <!-- Left Column: Camera Viewport -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm overflow-hidden mb-3">
+            <div class="card-header bg-dark text-white py-2 d-flex justify-content-between align-items-center">
+                <small class="fw-bold"><i class="bi bi-camera me-1"></i>Live AI Recognition Camera</small>
+                <small class="text-success fw-semibold"><i class="bi bi-shield-check"></i> Anti-Duplicate Active</small>
+            </div>
+            <div class="card-body p-1 bg-black position-relative">
+                <div class="webcam-container" style="min-height: 420px;">
+                    <video id="liveVideo" autoplay playsinline muted></video>
+                    <canvas id="overlayCanvas" class="webcam-overlay-canvas"></canvas>
+                    <div class="scanning-laser"></div>
+                    <div class="camera-face-frame"></div>
+                </div>
+            </div>
+            <div class="card-footer bg-white py-2">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="bi bi-info-circle me-1"></i>Camera automatically scans every frame.</small>
+                    <!-- Simulation button for testing without physical webcam -->
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="simulateRecognitionDemo()">
+                        <i class="bi bi-cpu me-1"></i>Simulate Next Student
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Success Toast / Card -->
+        <div id="recentMarkedCard" class="mb-3 d-none">
+            <!-- Populated dynamically via JS -->
+        </div>
+
+        <!-- Session Progress Card -->
+        <div class="card shadow-sm">
+            <div class="card-body p-3">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="fw-bold">Class Attendance Turnout</span>
+                    <span class="fs-5 fw-bold text-success">
+                        <span id="livePresentCounter">{{ present_count + late_count }}</span> / {{ total_enrolled }}
+                    </span>
+                </div>
+                <div class="progress" style="height: 10px;">
+                    {% set turnout_pct = ((present_count + late_count) / total_enrolled * 100)|round if total_enrolled > 0 else 0 %}
+                    <div id="turnoutProgressBar" class="progress-bar bg-success" role="progressbar" style="width: {{ turnout_pct }}%;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Real-time Attendance Roster -->
+    <div class="col-lg-6">
+        <div class="card shadow-sm h-100">
+            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                <h6 class="fw-bold mb-0"><i class="bi bi-list-check text-primary me-2"></i>Live Section Roster</h6>
+                <div class="d-flex gap-2">
+                    <span class="badge bg-success-subtle text-success border">Present: {{ present_count }}</span>
+                    <span class="badge bg-warning-subtle text-warning-emphasis border">Late: {{ late_count }}</span>
+                    <span class="badge bg-secondary-subtle text-secondary border">Total: {{ total_enrolled }}</span>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 540px; overflow-y: auto;">
+                <table class="table table-hover align-middle mb-0" id="rosterTable">
+                    <thead class="table-light sticky-top">
+                        <tr>
+                            <th>Roll Number</th>
+                            <th>Student</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                            <th>Match %</th>
+                            <th class="text-end">Manual Override</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rosterTableBody">
+                        {% for s in students %}
+                        <tr id="studentRow-{{ s.student_id }}" class="{% if s.status == 'Present' %}table-success{% elif s.status == 'Late' %}table-warning{% endif %}">
+                            <td class="fw-bold">{{ s.roll_number }}</td>
+                            <td>
+                                <div class="fw-semibold">{{ s.full_name }}</div>
+                                {% if not s.is_face_registered %}
+                                <span class="badge bg-light text-danger border" style="font-size: 0.65rem;">Face Not Enrolled</span>
+                                {% endif %}
+                            </td>
+                            <td class="status-col">
+                                {% if s.status == 'Present' %}
+                                <span class="badge bg-success"><i class="bi bi-check-circle"></i> Present</span>
+                                {% elif s.status == 'Late' %}
+                                <span class="badge bg-warning text-dark"><i class="bi bi-clock"></i> Late</span>
+                                {% elif s.status == 'Absent' %}
+                                <span class="badge bg-danger">Absent</span>
+                                {% else %}
+                                <span class="badge bg-secondary-subtle text-muted border">Not Marked</span>
+                                {% endif %}
+                            </td>
+                            <td class="time-col small text-muted">
+                                {% if s.marked_at %}
+                                {{ s.marked_at.split(' ')[1] if ' ' in s.marked_at|string else s.marked_at }}
+                                {% else %}
+                                -
+                                {% endif %}
+                            </td>
+                            <td class="conf-col small fw-semibold text-success">
+                                {{ s.confidence_score ~ '%' if s.confidence_score else '-' }}
+                            </td>
+                            <td class="text-end">
+                                <div class="btn-group btn-group-sm">
+                                    <button type="button" class="btn btn-outline-success btn-sm" onclick="markStudentManually({{ s.student_id }}, 'Present')" title="Mark Present">
+                                        <i class="bi bi-check"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning btn-sm" onclick="markStudentManually({{ s.student_id }}, 'Late')" title="Mark Late">
+                                        <i class="bi bi-clock"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    // Global session context for attendance_live.js
+    window.ATTENDANCE_SESSION_ID = {{ session_data.id }};
+
+    // Helper simulation function for offline demonstration
+    function simulateRecognitionDemo() {
+        const rows = document.querySelectorAll('#rosterTableBody tr');
+        for (let r of rows) {
+            const statusCol = r.querySelector('.status-col');
+            if (statusCol && statusCol.textContent.includes('Not Marked')) {
+                const id = r.id.replace('studentRow-', '');
+                markStudentManually(parseInt(id), 'Present');
+                break;
+            }
+        }
+    }
+</script>
+<script src="{{ url_for('static', filename='js/attendance_live.js') }}"></script>
+{% endblock %}

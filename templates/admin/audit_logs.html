@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Audit Trail - Smart Attendance AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h3 class="fw-bold mb-1"><i class="bi bi-journal-text text-primary me-2"></i>Attendance Correction Audit Logs</h3>
+        <p class="text-muted mb-0">Immutable tracking of manual overrides, teacher modifications, and administrative updates</p>
+    </div>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="fw-bold mb-0">Audit Records ({{ logs|length }})</h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Log ID</th>
+                    <th>Date &amp; Time</th>
+                    <th>Student</th>
+                    <th>Course</th>
+                    <th>Attendance Date</th>
+                    <th>Status Change</th>
+                    <th>Reason / Justification</th>
+                    <th>Modified By</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in logs %}
+                <tr>
+                    <td class="text-muted">#{{ l.id }}</td>
+                    <td class="small">{{ l.timestamp }}</td>
+                    <td>
+                        <span class="fw-bold">{{ l.roll_number }}</span>
+                        <div class="small text-muted">{{ l.student_name }}</div>
+                    </td>
+                    <td><span class="badge bg-light text-dark border">{{ l.course_code }}</span></td>
+                    <td class="small">{{ l.attendance_date }}</td>
+                    <td>
+                        <span class="badge bg-secondary">{{ l.previous_status }}</span>
+                        <i class="bi bi-arrow-right text-muted mx-1"></i>
+                        <span class="badge {% if l.new_status == 'Present' %}bg-success{% elif l.new_status == 'Late' %}bg-warning text-dark{% else %}bg-danger{% endif %}">{{ l.new_status }}</span>
+                    </td>
+                    <td><em class="text-dark">"{{ l.reason }}"</em></td>
+                    <td>
+                        <span class="fw-semibold">{{ l.modified_by_name }}</span>
+                        <span class="badge bg-light text-muted border text-capitalize">{{ l.modified_by_role }}</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="8" class="text-center py-4 text-muted">No manual attendance modifications recorded yet. All attendance is verified via AI.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
